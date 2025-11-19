@@ -62,13 +62,10 @@ def find_weak_points(text, matched_skills, experience_score):
 
     if len(text.split()) < 100:
         weak_points.append("Resume seems too short.")
-
     if experience_score == 0:
         weak_points.append("Weak experience section (no action verbs found).")
-
     if len(matched_skills) < 5:
         weak_points.append("Very few skills detected.")
-
     if not re.search(r"\d", text):
         weak_points.append("No measurable achievements (no numbers found).")
 
@@ -106,7 +103,6 @@ if st.button("Analyze Resume"):
 
     cleaned = clean_text(resume_text)
 
-    # -------------------------
     # Skills detection
     matched_skills = [skill for skill in skills_dict if skill in cleaned]
     skills_score = len(matched_skills)
@@ -121,12 +117,11 @@ if st.button("Analyze Resume"):
     # Weak points
     weak_points = find_weak_points(cleaned, matched_skills, experience_score)
 
-    # -------------------------
     # Overall Resume Score (weighted)
     resume_score = round(
         0.4 * skills_coverage + 
-        0.3 * min(experience_score, 50) * 2 +  # normalize experience_score roughly to 100
-        0.2 * min(keyword_score, 100), 2       # normalize keyword_score
+        0.3 * min(experience_score, 50) * 2 + 
+        0.2 * min(keyword_score, 100), 2
     )
 
     # -------------------------
@@ -143,25 +138,24 @@ if st.button("Analyze Resume"):
     st.write(f"**Overall Resume Score:** {resume_score}/100")
 
     # -------------------------
-    # Overall Resume Score Indicator (Progress bar + Color)
+    # Overall Resume Score Indicator
     st.write("### Overall Resume Score Indicator")
     if resume_score >= 80:
-        color = "#4CAF50"  # green
+        color = "#4CAF50"
         status = "Strong Resume"
     elif resume_score >= 50:
-        color = "#FFC107"  # yellow
+        color = "#FFC107"
         status = "Average Resume"
     else:
-        color = "#F44336"  # red
+        color = "#F44336"
         status = "Weak Resume"
 
-    # Show Overall Resume Score with color
-st.markdown(f"<h3 style='color:{color};'>Score: {resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
+    # Display score label
+    st.markdown(f"<h3 style='color:{color};'>Score: {resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
 
-# Safe progress bar (0-100 integer scale)
-st.progress(int(resume_score))
+    # Display progress bar (integer 0-100)
+    st.progress(int(resume_score))
 
-    # -------------------------
     # Skills coverage pie chart
     st.write("### Skills Coverage Visualization")
     labels = ['Matched Skills', 'Missing Skills']
@@ -172,7 +166,6 @@ st.progress(int(resume_score))
     ax1.axis('equal')
     st.pyplot(fig1)
 
-    # -------------------------
     # Experience highlights bar chart
     st.write("### Experience Highlights")
     verb_counts = {verb: cleaned.count(verb) for verb in action_verbs if cleaned.count(verb) > 0}
@@ -185,7 +178,6 @@ st.progress(int(resume_score))
     else:
         st.info("No action verbs detected for experience highlights.")
 
-    # -------------------------
     # Weak points / suggested improvements
     st.write("### Suggested Improvements")
     if weak_points:
@@ -194,7 +186,6 @@ st.progress(int(resume_score))
     else:
         st.success("No major weak points found! Resume looks good.")
 
-    # -------------------------
+    # Cleaned resume text
     st.write("### Cleaned Resume Text:")
     st.text(cleaned)
-
