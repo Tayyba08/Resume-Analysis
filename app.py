@@ -4,6 +4,65 @@ from pdfminer.high_level import extract_text
 import matplotlib.pyplot as plt
 
 # -------------------------
+# PAGE CONFIG & STYLING
+# -------------------------
+st.set_page_config(page_title="AI Resume Screening App", layout="wide")
+st.markdown("""
+    <style>
+    /* Background and main text */
+    .stApp {
+        background-color: #F5F7FA;
+        color: #333333;
+    }
+    /* Title styling */
+    .title {
+        font-size: 42px;
+        font-weight: bold;
+        color: #1F77B4;
+        text-align: center;
+    }
+    .subtitle {
+        font-size: 20px;
+        color: #555555;
+        text-align: center;
+    }
+    /* Upload button styling */
+    div.stFileUploader>div>input {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #1F77B4;
+    }
+    /* Analyze button */
+    div.stButton>button {
+        background-color: #1F77B4;
+        color: white;
+        height: 3em;
+        width: 100%;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    div.stButton>button:hover {
+        background-color: #155d8b;
+        color: white;
+    }
+    /* Skill badges */
+    .skill-badge {
+        background-color: #FFDD57;
+        padding: 5px 12px;
+        border-radius: 12px;
+        margin: 2px;
+        display: inline-block;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="title">📄 AI Resume Screening System</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Upload your resume (PDF) or paste text below to analyze</div>', unsafe_allow_html=True)
+st.markdown("---")
+
+# -------------------------
 # TEXT CLEANING FUNCTION
 # -------------------------
 def clean_text(text):
@@ -13,34 +72,25 @@ def clean_text(text):
     return text.strip()
 
 # -------------------------
-# FULL SKILLS DICTIONARY
+# SKILLS & ACTION VERBS
 # -------------------------
 skills_dict = [
-    'python', 'sql', 'excel', 'machine learning', 'data analysis',
-    'communication', 'teamwork', 'project management', 'design', 'photoshop',
-    'teaching', 'leadership', 'marketing', 'sales', 'accounting', 'finance',
-    'healthcare', 'customer service', 'research', 'public speaking', 'writing',
-    'problem solving', 'data entry', 'presentation', 'project planning',
-    'creative thinking', 'time management', 'html', 'css', 'javascript',
-    'java', 'c++', 'react', 'angular', 'node.js', 'database', 'sql server',
-    'oracle', 'illustrator', 'autocad', 'solidworks', 'adobe xd',
-    'social media', 'digital marketing', 'seo', 'content writing', 'analytics'
+    'python','sql','excel','machine learning','data analysis','communication','teamwork','project management',
+    'design','photoshop','teaching','leadership','marketing','sales','accounting','finance','healthcare',
+    'customer service','research','public speaking','writing','problem solving','data entry','presentation',
+    'project planning','creative thinking','time management','html','css','javascript','java','c++','react',
+    'angular','node.js','database','sql server','oracle','illustrator','autocad','solidworks','adobe xd',
+    'social media','digital marketing','seo','content writing','analytics'
 ]
 skills_dict = list(set(skills_dict))
 
-# -------------------------
-# ACTION VERBS
-# -------------------------
 action_verbs = [
-    "managed", "led", "developed", "created", "designed", "organized",
-    "implemented", "built", "optimized", "executed", "achieved", "supervised",
-    "coordinated", "improved", "increased", "decreased", "delivered",
-    "launched", "enhanced", "maintained", "streamlined", "analyzed",
-    "evaluated", "planned", "trained", "mentored", "supported", "resolved",
-    "researched", "produced", "initiated", "facilitated", "collaborated",
-    "negotiated", "documented", "upgraded", "tested", "monitored",
-    "configured", "engineered", "programmed", "assisted", "advised",
-    "recommended", "presented", "oversaw"
+    "managed","led","developed","created","designed","organized","implemented","built","optimized","executed",
+    "achieved","supervised","coordinated","improved","increased","decreased","delivered","launched","enhanced",
+    "maintained","streamlined","analyzed","evaluated","planned","trained","mentored","supported","resolved",
+    "researched","produced","initiated","facilitated","collaborated","negotiated","documented","upgraded",
+    "tested","monitored","configured","engineered","programmed","assisted","advised","recommended",
+    "presented","oversaw"
 ]
 
 # -------------------------
@@ -59,21 +109,13 @@ def find_weak_points(text, matched_skills, experience_score):
     return weak_points
 
 # -------------------------
-# STREAMLIT UI SETUP
-# -------------------------
-st.set_page_config(page_title="AI Resume Screening", layout="wide")
-st.markdown("<h1 style='text-align:center; color:#1F77B4;'>📄 AI Resume Screening System</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align:center; color:#555;'>Upload PDF or paste your resume text below</h4>", unsafe_allow_html=True)
-st.markdown("---")
-
-# -------------------------
 # SIDEBAR UPLOAD
 # -------------------------
-st.sidebar.title("Resume Analyzer")
-uploaded_pdf = st.sidebar.file_uploader("Upload PDF Resume", type=["pdf"])
+st.sidebar.header("Resume Upload & Analysis")
+uploaded_pdf = st.sidebar.file_uploader("Choose PDF Resume", type=["pdf"])
 manual_text = st.sidebar.text_area("Or paste resume text here:", height=200)
-
 resume_text = ""
+
 if uploaded_pdf is not None:
     try:
         resume_text = extract_text(uploaded_pdf)
@@ -85,12 +127,12 @@ if manual_text.strip():
     resume_text = manual_text
 
 # -------------------------
-# ANALYSIS
+# ANALYSIS BUTTON
 # -------------------------
 if st.button("Analyze Resume"):
 
     if not resume_text.strip():
-        st.warning("Please upload PDF or paste resume text.")
+        st.warning("Please upload a PDF or paste resume text.")
         st.stop()
 
     cleaned = clean_text(resume_text)
@@ -119,7 +161,7 @@ if st.button("Analyze Resume"):
         st.subheader("💼 Detected Skills")
         if matched_skills:
             for skill in matched_skills:
-                st.markdown(f"<span style='background-color:#FFDD57; padding:5px 12px; border-radius:12px; margin:2px; display:inline-block;'>{skill.capitalize()}</span>", unsafe_allow_html=True)
+                st.markdown(f'<span class="skill-badge">{skill.capitalize()}</span>', unsafe_allow_html=True)
         else:
             st.info("No major skills detected.")
 
@@ -135,7 +177,6 @@ if st.button("Analyze Resume"):
     else:
         color = "#F44336"
         status = "Weak Resume"
-
     st.markdown(f"<h3 style='color:{color};'>{resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
     st.progress(int(resume_score))
 
@@ -171,4 +212,3 @@ if st.button("Analyze Resume"):
             st.error(f"- {wp}")
     else:
         st.success("No major weak points found! Resume looks good.")
-
