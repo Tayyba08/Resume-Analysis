@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 # THEME / DARK-LIGHT MODE
 # -------------------------
 mode = st.sidebar.radio("Choose Theme", ["Light", "Dark"])
+
 if mode == "Dark":
     sidebar_bg = "#2C2C2C"
     sidebar_text = "#F0F0F0"
@@ -22,6 +23,9 @@ else:
     main_bg = "#F5F7FA"
     main_text = "#333333"
 
+# -------------------------
+# CSS STYLING
+# -------------------------
 st.markdown(f"""
     <style>
     /* Main app background and text */
@@ -29,12 +33,23 @@ st.markdown(f"""
         background-color: {main_bg};
         color: {main_text};
     }}
+
     /* Sidebar background and text */
     [data-testid="stSidebar"] > div:first-child {{
         background-color: {sidebar_bg};
         color: {sidebar_text};
     }}
-    /* Upload widget styling (file uploader) */
+
+    /* Sidebar header, labels, text color */
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3, 
+    [data-testid="stSidebar"] h4, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] span {{
+        color: {sidebar_text};
+    }}
+
+    /* Upload widget styling */
     .stFileUploader > label > div {{
         background-color: {btn_bg};
         border-radius: 8px;
@@ -46,6 +61,7 @@ st.markdown(f"""
     .stFileUploader > label > div:hover {{
         background-color: {btn_hover};
     }}
+
     /* Analyze button styling */
     div.stButton > button {{
         background-color: {btn_bg};
@@ -210,3 +226,4 @@ if st.button("Analyze Resume"):
             st.error(f"- {wp}")
     else:
         st.success("No major weak points found! Resume looks good.")
+
