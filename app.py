@@ -1,69 +1,39 @@
 import streamlit as st
 import re
 from pdfminer.high_level import extract_text
+from docx import Document
 import matplotlib.pyplot as plt
 
 # -------------------------
-# PAGE CONFIG & STYLING
+# DARK/LIGHT MODE
 # -------------------------
-st.set_page_config(page_title="AI Resume Screening App", layout="wide")
-st.markdown("""
-    <style>
-    /* Background and main text */
-    .stApp {
-        background-color: #F5F7FA;
-        color: #333333;
-    }
-    /* Title styling */
-    .title {
-        font-size: 42px;
-        font-weight: bold;
-        color: #1F77B4;
-        text-align: center;
-    }
-    .subtitle {
-        font-size: 20px;
-        color: #555555;
-        text-align: center;
-    }
-    /* Upload button styling */
-    div.stFileUploader>div>input {
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #1F77B4;
-    }
-    /* Analyze button */
-    div.stButton>button {
-        background-color: #1F77B4;
-        color: white;
-        height: 3em;
-        width: 100%;
-        border-radius: 10px;
-        font-size: 18px;
-        font-weight: bold;
-    }
-    div.stButton>button:hover {
-        background-color: #155d8b;
-        color: white;
-    }
-    /* Skill badges */
-    .skill-badge {
-        background-color: #FFDD57;
-        padding: 5px 12px;
-        border-radius: 12px;
-        margin: 2px;
-        display: inline-block;
-        font-weight: bold;
-    }
-    </style>
-""", unsafe_allow_html=True)
+mode = st.sidebar.radio("Choose Theme", ["Light", "Dark"])
+if mode == "Dark":
+    st.markdown("""
+        <style>
+        .stApp {background-color: #1E1E1E; color: #F0F0F0;}
+        div.stButton>button {background-color:#4CAF50; color:white; height:3em; width:100%; border-radius:10px; font-size:18px; font-weight:bold;}
+        div.stButton>button:hover {background-color:#357a38;}
+        </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+        <style>
+        .stApp {background-color: #F5F7FA; color: #333333;}
+        div.stButton>button {background-color:#1F77B4; color:white; height:3em; width:100%; border-radius:10px; font-size:18px; font-weight:bold;}
+        div.stButton>button:hover {background-color:#155d8b;}
+        </style>
+    """, unsafe_allow_html=True)
 
-st.markdown('<div class="title">📄 AI Resume Screening System</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Upload your resume (PDF) or paste text below to analyze</div>', unsafe_allow_html=True)
+# -------------------------
+# TITLE
+# -------------------------
+st.markdown('<h1 style="text-align:center; color:#1F77B4;">📄 AI Resume Screening System</h1>', unsafe_allow_html=True)
+st.markdown('<h4 style="text-align:center; color:#555;">Upload your resume (PDF/Word) or paste text below</h4>', unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------
-# TEXT CLEANING FUNCTION
+# CLEAN TEXT FUNCTION
 # -------------------------
 def clean_text(text):
     text = str(text).lower()
@@ -72,7 +42,7 @@ def clean_text(text):
     return text.strip()
 
 # -------------------------
-# SKILLS & ACTION VERBS
+# SKILLS & VERBS
 # -------------------------
 skills_dict = [
     'python','sql','excel','machine learning','data analysis','communication','teamwork','project management',
@@ -109,30 +79,38 @@ def find_weak_points(text, matched_skills, experience_score):
     return weak_points
 
 # -------------------------
-# SIDEBAR UPLOAD
+# MODERN DRAG-AND-DROP FILE UPLOAD
 # -------------------------
-st.sidebar.header("Resume Upload & Analysis")
-uploaded_pdf = st.sidebar.file_uploader("Choose PDF Resume", type=["pdf"])
+st.sidebar.header("Upload Resume")
+uploaded_file = st.sidebar.file_uploader("Drag & drop PDF or Word file here", type=["pdf","docx"], accept_multiple_files=False)
 manual_text = st.sidebar.text_area("Or paste resume text here:", height=200)
 resume_text = ""
 
-if uploaded_pdf is not None:
-    try:
-        resume_text = extract_text(uploaded_pdf)
-        st.sidebar.success("PDF extracted successfully!")
-    except:
-        st.sidebar.error("Error reading PDF file.")
+if uploaded_file is not None:
+    if uploaded_file.type == "application/pdf":
+        try:
+            resume_text = extract_text(uploaded_file)
+            st.sidebar.success("PDF extracted successfully!")
+        except:
+            st.sidebar.error("Error reading PDF file.")
+    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        try:
+            doc = Document(uploaded_file)
+            resume_text = "\n".join([para.text for para in doc.paragraphs])
+            st.sidebar.success("Word file extracted successfully!")
+        except:
+            st.sidebar.error("Error reading Word file.")
 
 if manual_text.strip():
     resume_text = manual_text
 
 # -------------------------
-# ANALYSIS BUTTON
+# ANALYZE BUTTON (SAME SIZE AS BEFORE)
 # -------------------------
 if st.button("Analyze Resume"):
 
     if not resume_text.strip():
-        st.warning("Please upload a PDF or paste resume text.")
+        st.warning("Please upload a file or paste resume text.")
         st.stop()
 
     cleaned = clean_text(resume_text)
@@ -149,8 +127,6 @@ if st.button("Analyze Resume"):
         0.2 * min(keyword_score, 100), 2
     )
 
-    # -------------------------
-    # TWO COLUMN LAYOUT
     col1, col2 = st.columns([2,1])
 
     with col1:
@@ -161,12 +137,10 @@ if st.button("Analyze Resume"):
         st.subheader("💼 Detected Skills")
         if matched_skills:
             for skill in matched_skills:
-                st.markdown(f'<span class="skill-badge">{skill.capitalize()}</span>', unsafe_allow_html=True)
+                st.markdown(f'<span style="background-color:#FFDD57; padding:5px 12px; border-radius:12px; margin:2px; display:inline-block; font-weight:bold;">{skill.capitalize()}</span>', unsafe_allow_html=True)
         else:
             st.info("No major skills detected.")
 
-    # -------------------------
-    # SCORE INDICATOR
     st.subheader("🏆 Overall Resume Score")
     if resume_score >= 80:
         color = "#4CAF50"
@@ -180,8 +154,6 @@ if st.button("Analyze Resume"):
     st.markdown(f"<h3 style='color:{color};'>{resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
     st.progress(int(resume_score))
 
-    # -------------------------
-    # PIE CHART
     st.subheader("📊 Score Breakdown")
     labels = ['Skills Score','Experience Score','Keyword Score']
     sizes = [min(skills_score,len(skills_dict)), min(experience_score,50), min(keyword_score,100)]
@@ -191,8 +163,6 @@ if st.button("Analyze Resume"):
     ax.axis('equal')
     st.pyplot(fig)
 
-    # -------------------------
-    # ACTION VERB HIGHLIGHTS
     st.subheader("📌 Experience Highlights")
     verb_counts = {verb: cleaned.count(verb) for verb in action_verbs if cleaned.count(verb) > 0}
     if verb_counts:
@@ -204,8 +174,6 @@ if st.button("Analyze Resume"):
     else:
         st.info("No action verbs detected.")
 
-    # -------------------------
-    # WEAK POINTS
     st.subheader("⚠ Suggested Improvements")
     if weak_points:
         for wp in weak_points:
