@@ -59,7 +59,6 @@ action_verbs = [
 # -------------------------
 def find_weak_points(text, matched_skills, experience_score):
     weak_points = []
-
     if len(text.split()) < 100:
         weak_points.append("Resume seems too short.")
     if experience_score == 0:
@@ -68,7 +67,6 @@ def find_weak_points(text, matched_skills, experience_score):
         weak_points.append("Very few skills detected.")
     if not re.search(r"\d", text):
         weak_points.append("No measurable achievements (no numbers found).")
-
     return weak_points
 
 # -------------------------
@@ -127,7 +125,6 @@ if st.button("Analyze Resume"):
     # -------------------------
     # SHOW RESULTS
     st.subheader("Resume Analysis Results")
-
     st.write("### Matched Skills:")
     st.write(matched_skills if matched_skills else "No major skills detected.")
 
@@ -137,7 +134,6 @@ if st.button("Analyze Resume"):
     st.write(f"**Experience Score (Action Verbs Count):** {experience_score}")
     st.write(f"**Overall Resume Score:** {resume_score}/100")
 
-    # -------------------------
     # Overall Resume Score Indicator
     st.write("### Overall Resume Score Indicator")
     if resume_score >= 80:
@@ -150,29 +146,25 @@ if st.button("Analyze Resume"):
         color = "#F44336"
         status = "Weak Resume"
 
-    # Display score label
     st.markdown(f"<h3 style='color:{color};'>Score: {resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
-
-    # Display progress bar (integer 0-100)
     st.progress(int(resume_score))
 
-   # -------------------------
-# Score Summary Pie Chart
-st.write("### Score Summary Visualization")
-labels = ['Skills Score', 'Experience Score', 'Keyword Score']
-sizes = [
-    min(skills_score, len(skills_dict)),  # cap skills score to max skills
-    min(experience_score, 50),           # cap experience score to 50 for normalization
-    min(keyword_score, 100)               # cap keyword score to 100
-]
-colors = ['#4CAF50', '#2196F3', '#FFC107']
-fig, ax = plt.subplots()
-ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
-ax.axis('equal')
-st.pyplot(fig)
+    # -------------------------
+    # Score Summary Pie Chart
+    st.write("### Score Summary Visualization")
+    labels = ['Skills Score', 'Experience Score', 'Keyword Score']
+    sizes = [
+        min(skills_score, len(skills_dict)),
+        min(experience_score, 50),
+        min(keyword_score, 100)
+    ]
+    colors = ['#4CAF50', '#2196F3', '#FFC107']
+    fig, ax = plt.subplots()
+    ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+    ax.axis('equal')
+    st.pyplot(fig)
 
-
-    # Experience highlights bar chart
+    # Experience Highlights
     st.write("### Experience Highlights")
     verb_counts = {verb: cleaned.count(verb) for verb in action_verbs if cleaned.count(verb) > 0}
     if verb_counts:
@@ -184,7 +176,7 @@ st.pyplot(fig)
     else:
         st.info("No action verbs detected for experience highlights.")
 
-    # Weak points / suggested improvements
+    # Weak points
     st.write("### Suggested Improvements")
     if weak_points:
         for wp in weak_points:
@@ -192,6 +184,6 @@ st.pyplot(fig)
     else:
         st.success("No major weak points found! Resume looks good.")
 
-    # Cleaned resume text
+    # Cleaned Resume Text
     st.write("### Cleaned Resume Text:")
     st.text(cleaned)
