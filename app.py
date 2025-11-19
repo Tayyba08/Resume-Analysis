@@ -12,21 +12,48 @@ def clean_text(text):
     return text.strip()
 
 # -------------------------
-# SKILLS DICTIONARY
+# FULL SKILLS DICTIONARY (UPDATED)
 # -------------------------
 skills_dict = [
-    "python", "java", "c++", "sql", "machine learning", "deep learning",
-    "excel", "power bi", "tableau", "django", "flask", "html", "css",
-    "javascript", "react", "node", "aws", "docker", "kubernetes"
+    'python', 'sql', 'excel', 'machine learning', 'data analysis',
+    'communication', 'teamwork', 'project management', 'design', 'photoshop',
+    'teaching', 'leadership', 'marketing', 'sales', 'accounting', 'finance',
+    'healthcare', 'customer service', 'research', 'public speaking', 'writing',
+    'problem solving', 'data entry', 'presentation', 'project planning',
+    'creative thinking', 'time management', 'html', 'css', 'javascript',
+    'java', 'c++', 'react', 'angular', 'node.js', 'database', 'sql server',
+    'oracle', 'illustrator', 'autocad', 'solidworks', 'adobe xd',
+    'social media', 'digital marketing', 'seo', 'content writing', 'analytics',
+    'team leadership', 'coaching', 'mentoring', 'training', 'networking',
+    'customer relations', 'event planning', 'salesforce', 'crm', 'excel pivot',
+    'power bi', 'tableau', 'cloud computing', 'aws', 'azure', 'gcp',
+    'linux', 'windows', 'network security', 'cybersecurity', 'risk management',
+    'budgeting', 'strategic planning', 'negotiation', 'procurement', 'logistics',
+    'supply chain', 'operations', 'classroom management',
+    'lesson planning', 'curriculum design', 'fitness training',
+    'agriculture', 'farm management', 'bpo', 'customer support', 'engineering',
+    'mechanical', 'electrical', 'civil', 'aviation', 'chef', 'hospitality',
+    'apparel', 'fashion', 'public relations', 'banking', 'arts', 'digital media'
 ]
+
+# Remove duplicates
+skills_dict = list(set(skills_dict))
 
 # -------------------------
 # ACTION VERBS FOR EXPERIENCE
 # -------------------------
 action_verbs = [
-    "managed", "led", "developed", "created", "designed",
-    "organized", "implemented", "built", "optimized"
+    "managed", "led", "developed", "created", "designed", "organized",
+    "implemented", "built", "optimized", "executed", "achieved", "supervised",
+    "coordinated", "improved", "increased", "decreased", "delivered",
+    "launched", "enhanced", "maintained", "streamlined", "analyzed",
+    "evaluated", "planned", "trained", "mentored", "supported", "resolved",
+    "researched", "produced", "initiated", "facilitated", "collaborated",
+    "negotiated", "documented", "upgraded", "tested", "monitored",
+    "configured", "engineered", "programmed", "assisted", "advised",
+    "recommended", "presented", "oversaw"
 ]
+
 
 # -------------------------
 # WEAK POINTS FINDER
@@ -34,20 +61,20 @@ action_verbs = [
 def find_weak_points(text):
     weak_points = []
 
-    # 1. Too short resume
+    # 1. Too short
     if len(text.split()) < 100:
         weak_points.append("Resume seems too short.")
 
-    # 2. No action verbs (weak experience section)
+    # 2. No action verbs
     if not any(verb in text for verb in action_verbs):
         weak_points.append("Weak experience section (no action verbs found).")
 
-    # 3. Few or no skills
+    # 3. Low skills count
     matched = [skill for skill in skills_dict if skill in text]
-    if len(matched) < 3:
-        weak_points.append("Very few technical skills detected.")
+    if len(matched) < 5:
+        weak_points.append("Very few skills detected.")
 
-    # 4. No numbers (metrics missing)
+    # 4. No numbers
     if not re.search(r"\d", text):
         weak_points.append("No measurable achievements (no numbers found).")
 
@@ -69,7 +96,7 @@ uploaded_pdf = st.file_uploader("Upload PDF Resume", type=["pdf"])
 if uploaded_pdf is not None:
     try:
         resume_text = extract_text(uploaded_pdf)
-        st.success("PDF text extracted successfully!")
+        st.success("PDF extracted successfully!")
     except:
         st.error("Error reading PDF file.")
 
@@ -94,7 +121,7 @@ if st.button("Analyze Resume"):
     matched_skills = [skill for skill in skills_dict if skill in cleaned]
     skills_score = len(matched_skills)
 
-    # Keyword score
+    # Keyword score (total words)
     keyword_score = len(cleaned.split())
 
     # Experience score
@@ -121,8 +148,9 @@ if st.button("Analyze Resume"):
         for wp in weak_points:
             st.error(f"- {wp}")
     else:
-        st.success("No major weak points found! Your resume looks strong.")
+        st.success("No major weak points found!")
 
-    st.write("### Cleaned Resume Text (for reference):")
+    st.write("### Cleaned Resume Text:")
     st.text(cleaned)
+
 
