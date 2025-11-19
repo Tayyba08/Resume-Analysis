@@ -24,23 +24,12 @@ skills_dict = [
     'creative thinking', 'time management', 'html', 'css', 'javascript',
     'java', 'c++', 'react', 'angular', 'node.js', 'database', 'sql server',
     'oracle', 'illustrator', 'autocad', 'solidworks', 'adobe xd',
-    'social media', 'digital marketing', 'seo', 'content writing', 'analytics',
-    'team leadership', 'coaching', 'mentoring', 'training', 'networking',
-    'customer relations', 'event planning', 'salesforce', 'crm', 'excel pivot',
-    'power bi', 'tableau', 'cloud computing', 'aws', 'azure', 'gcp',
-    'linux', 'windows', 'network security', 'cybersecurity', 'risk management',
-    'budgeting', 'strategic planning', 'negotiation', 'procurement', 'logistics',
-    'supply chain', 'operations', 'classroom management',
-    'lesson planning', 'curriculum design', 'fitness training',
-    'agriculture', 'farm management', 'bpo', 'customer support', 'engineering',
-    'mechanical', 'electrical', 'civil', 'aviation', 'chef', 'hospitality',
-    'apparel', 'fashion', 'public relations', 'banking', 'arts', 'digital media'
+    'social media', 'digital marketing', 'seo', 'content writing', 'analytics'
 ]
-
 skills_dict = list(set(skills_dict))
 
 # -------------------------
-# ACTION VERBS FOR EXPERIENCE
+# ACTION VERBS
 # -------------------------
 action_verbs = [
     "managed", "led", "developed", "created", "designed", "organized",
@@ -55,7 +44,7 @@ action_verbs = [
 ]
 
 # -------------------------
-# WEAK POINTS FINDER
+# WEAK POINTS FUNCTION
 # -------------------------
 def find_weak_points(text, matched_skills, experience_score):
     weak_points = []
@@ -70,52 +59,48 @@ def find_weak_points(text, matched_skills, experience_score):
     return weak_points
 
 # -------------------------
-# STREAMLIT APP UI
+# STREAMLIT UI SETUP
 # -------------------------
-st.set_page_config(page_title="AI Resume Screening App", layout="wide")
-st.title("AI Resume Screening System")
-st.write("Upload your resume as PDF or paste the text below:")
+st.set_page_config(page_title="AI Resume Screening", layout="wide")
+st.markdown("<h1 style='text-align:center; color:#1F77B4;'>📄 AI Resume Screening System</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align:center; color:#555;'>Upload PDF or paste your resume text below</h4>", unsafe_allow_html=True)
+st.markdown("---")
+
+# -------------------------
+# SIDEBAR UPLOAD
+# -------------------------
+st.sidebar.title("Resume Analyzer")
+uploaded_pdf = st.sidebar.file_uploader("Upload PDF Resume", type=["pdf"])
+manual_text = st.sidebar.text_area("Or paste resume text here:", height=200)
 
 resume_text = ""
-
-uploaded_pdf = st.file_uploader("Upload PDF Resume", type=["pdf"])
 if uploaded_pdf is not None:
     try:
         resume_text = extract_text(uploaded_pdf)
-        st.success("PDF extracted successfully!")
+        st.sidebar.success("PDF extracted successfully!")
     except:
-        st.error("Error reading PDF file.")
+        st.sidebar.error("Error reading PDF file.")
 
-manual_text = st.text_area("Or paste your resume text here:", height=250)
 if manual_text.strip():
     resume_text = manual_text
 
 # -------------------------
-# RUN ANALYSIS
+# ANALYSIS
 # -------------------------
 if st.button("Analyze Resume"):
 
     if not resume_text.strip():
-        st.warning("Please upload a PDF or paste resume text.")
+        st.warning("Please upload PDF or paste resume text.")
         st.stop()
 
     cleaned = clean_text(resume_text)
-
-    # Skills detection
     matched_skills = [skill for skill in skills_dict if skill in cleaned]
     skills_score = len(matched_skills)
     skills_coverage = round((skills_score / len(skills_dict)) * 100, 2)
-
-    # Keyword score
     keyword_score = len(cleaned.split())
-
-    # Experience score
     experience_score = sum(cleaned.count(verb) for verb in action_verbs)
-
-    # Weak points
     weak_points = find_weak_points(cleaned, matched_skills, experience_score)
 
-    # Overall Resume Score (weighted)
     resume_score = round(
         0.4 * skills_coverage + 
         0.3 * min(experience_score, 50) * 2 + 
@@ -123,19 +108,24 @@ if st.button("Analyze Resume"):
     )
 
     # -------------------------
-    # SHOW RESULTS
-    st.subheader("Resume Analysis Results")
-    st.write("### Matched Skills:")
-    st.write(matched_skills if matched_skills else "No major skills detected.")
+    # TWO COLUMN LAYOUT
+    col1, col2 = st.columns([2,1])
 
-    st.write("### Score Summary:")
-    st.write(f"**Skills Score:** {skills_score} / {len(skills_dict)} ({skills_coverage}%)")
-    st.write(f"**Keyword Score (Total Words):** {keyword_score}")
-    st.write(f"**Experience Score (Action Verbs Count):** {experience_score}")
-    st.write(f"**Overall Resume Score:** {resume_score}/100")
+    with col1:
+        st.subheader("📑 Resume Preview")
+        st.write(" ".join(cleaned.split()))
 
-    # Overall Resume Score Indicator
-    st.write("### Overall Resume Score Indicator")
+    with col2:
+        st.subheader("💼 Detected Skills")
+        if matched_skills:
+            for skill in matched_skills:
+                st.markdown(f"<span style='background-color:#FFDD57; padding:5px 12px; border-radius:12px; margin:2px; display:inline-block;'>{skill.capitalize()}</span>", unsafe_allow_html=True)
+        else:
+            st.info("No major skills detected.")
+
+    # -------------------------
+    # SCORE INDICATOR
+    st.subheader("🏆 Overall Resume Score")
     if resume_score >= 80:
         color = "#4CAF50"
         status = "Strong Resume"
@@ -146,46 +136,39 @@ if st.button("Analyze Resume"):
         color = "#F44336"
         status = "Weak Resume"
 
-    st.markdown(f"<h3 style='color:{color};'>Score: {resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:{color};'>{resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
     st.progress(int(resume_score))
 
     # -------------------------
-    # Score Summary Pie Chart (Smaller)
-    st.write("### Score Summary Visualization")
-    labels = ['Skills Score', 'Experience Score', 'Keyword Score']
-    sizes = [
-        min(skills_score, len(skills_dict)),
-        min(experience_score, 50),
-        min(keyword_score, 100)
-    ]
-    colors = ['#4CAF50', '#2196F3', '#FFC107']
-    fig, ax = plt.subplots(figsize=(4,4))  # smaller pie chart
+    # PIE CHART
+    st.subheader("📊 Score Breakdown")
+    labels = ['Skills Score','Experience Score','Keyword Score']
+    sizes = [min(skills_score,len(skills_dict)), min(experience_score,50), min(keyword_score,100)]
+    colors = ['#4CAF50','#2196F3','#FFC107']
+    fig, ax = plt.subplots(figsize=(4,4))
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
     ax.axis('equal')
     st.pyplot(fig)
 
     # -------------------------
-    # Experience Highlights (Smaller Bar Chart)
-    st.write("### Experience Highlights")
+    # ACTION VERB HIGHLIGHTS
+    st.subheader("📌 Experience Highlights")
     verb_counts = {verb: cleaned.count(verb) for verb in action_verbs if cleaned.count(verb) > 0}
     if verb_counts:
-        fig2, ax2 = plt.subplots(figsize=(8,3))  # smaller figure
+        fig2, ax2 = plt.subplots(figsize=(8,3))
         ax2.barh(list(verb_counts.keys()), list(verb_counts.values()), color='#2196F3')
-        ax2.set_xlabel("Count in Resume")
+        ax2.set_xlabel("Count")
         ax2.set_ylabel("Action Verbs")
         st.pyplot(fig2)
     else:
-        st.info("No action verbs detected for experience highlights.")
+        st.info("No action verbs detected.")
 
     # -------------------------
-    # Weak points / suggestions
-    st.write("### Suggested Improvements")
+    # WEAK POINTS
+    st.subheader("⚠ Suggested Improvements")
     if weak_points:
         for wp in weak_points:
             st.error(f"- {wp}")
     else:
         st.success("No major weak points found! Resume looks good.")
 
-    # Cleaned Resume Text (Paragraph Form)
-    st.write("### Cleaned Resume Text:")
-    st.write(" ".join(cleaned.split()))  # shows as readable paragraph
