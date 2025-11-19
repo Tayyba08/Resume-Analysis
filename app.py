@@ -40,13 +40,19 @@ st.markdown(f"""
         color: {sidebar_text};
     }}
 
-    /* Sidebar header, labels, text color */
+    /* Sidebar headers, labels, text color */
     [data-testid="stSidebar"] h2, 
     [data-testid="stSidebar"] h3, 
     [data-testid="stSidebar"] h4, 
     [data-testid="stSidebar"] label, 
     [data-testid="stSidebar"] span {{
         color: {sidebar_text};
+    }}
+
+    /* Radio buttons text color */
+    [data-testid="stSidebar"] [role="radiogroup"] label {{
+        color: {sidebar_text};
+        font-weight: bold;
     }}
 
     /* Upload widget styling */
@@ -226,4 +232,5 @@ if st.button("Analyze Resume"):
             st.error(f"- {wp}")
     else:
         st.success("No major weak points found! Resume looks good.")
+
 
