@@ -156,15 +156,21 @@ if st.button("Analyze Resume"):
     # Display progress bar (integer 0-100)
     st.progress(int(resume_score))
 
-    # Skills coverage pie chart
-    st.write("### Skills Coverage Visualization")
-    labels = ['Matched Skills', 'Missing Skills']
-    sizes = [skills_score, len(skills_dict) - skills_score]
-    colors = ['#4CAF50', '#FFC107']
-    fig1, ax1 = plt.subplots()
-    ax1.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
-    ax1.axis('equal')
-    st.pyplot(fig1)
+   # -------------------------
+# Score Summary Pie Chart
+st.write("### Score Summary Visualization")
+labels = ['Skills Score', 'Experience Score', 'Keyword Score']
+sizes = [
+    min(skills_score, len(skills_dict)),  # cap skills score to max skills
+    min(experience_score, 50),           # cap experience score to 50 for normalization
+    min(keyword_score, 100)               # cap keyword score to 100
+]
+colors = ['#4CAF50', '#2196F3', '#FFC107']
+fig, ax = plt.subplots()
+ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+ax.axis('equal')
+st.pyplot(fig)
+
 
     # Experience highlights bar chart
     st.write("### Experience Highlights")
