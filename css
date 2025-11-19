@@ -1,0 +1,134 @@
+import streamlit as st
+from pdfminer.high_level import extract_text
+import re
+import matplotlib.pyplot as plt
+
+# -------------------------
+# PAGE CONFIG
+# -------------------------
+st.set_page_config(
+    page_title="Resume Analyzer",
+    page_icon="📄",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# -------------------------
+# SIDEBAR
+# -------------------------
+st.sidebar.title("Resume Analyzer")
+st.sidebar.markdown("Upload your resume (PDF) to analyze skills and generate insights.")
+uploaded_file = st.sidebar.file_uploader("Choose a PDF file", type=["pdf"])
+st.sidebar.markdown("---")
+
+# -------------------------
+# CUSTOM CSS FOR PROFESSIONAL LOOK
+# -------------------------
+st.markdown("""
+    <style>
+    .stButton>button {
+        background-color: #1F77B4;
+        color: white;
+        height: 3em;
+        width: 100%;
+        border-radius: 10px;
+        border: none;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background-color: #155d8b;
+        color: white;
+    }
+    .title {
+        font-size: 42px;
+        font-weight: bold;
+        color: #1F77B4;
+        text-align: center;
+        margin-bottom: 0;
+    }
+    .sub-title {
+        font-size: 22px;
+        color: #555555;
+        text-align: center;
+    }
+    .skill-badge {
+        background-color: #FFDD57;
+        padding: 5px 12px;
+        border-radius: 12px;
+        margin: 2px;
+        display: inline-block;
+        font-weight: bold;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="title">📄 Resume Analyzer</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">Analyze your resume and detect your top skills</div>', unsafe_allow_html=True)
+st.markdown("---")
+
+# -------------------------
+# FUNCTION TO CLEAN TEXT
+# -------------------------
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+# -------------------------
+# FUNCTION TO EXTRACT SKILLS
+# -------------------------
+skills_dict = ["python", "sql", "excel", "machine learning", "data analysis",
+               "communication", "teamwork", "project management", "marketing", "sales"]
+
+def extract_skills(text):
+    detected = [skill for skill in skills_dict if skill in text]
+    return detected
+
+# -------------------------
+# RESUME ANALYSIS
+# -------------------------
+if uploaded_file:
+    with st.spinner("Extracting text from your resume..."):
+        text = extract_text(uploaded_file)
+        cleaned_text = clean_text(text)
+    
+    st.success("✅ Resume Uploaded Successfully!")
+    
+    # -------------------------
+    # LAYOUT: TWO COLUMNS
+    # -------------------------
+    col1, col2 = st.columns([2,1])
+
+    with col1:
+        st.subheader("📑 Resume Content Preview")
+        st.write(cleaned_text[:1000] + "..." if len(cleaned_text) > 1000 else cleaned_text)
+    
+    with col2:
+        st.subheader("💼 Detected Skills")
+        skills_found = extract_skills(cleaned_text)
+        if skills_found:
+            for skill in skills_found:
+                st.markdown(f'<span class="skill-badge">{skill.capitalize()}</span>', unsafe_allow_html=True)
+        else:
+            st.warning("No skills detected. Try another resume.")
+
+    # -------------------------
+    # SKILL DISTRIBUTION CHART
+    # -------------------------
+    if skills_found:
+        st.subheader("📊 Skills Distribution")
+        counts = [cleaned_text.count(skill) for skill in skills_found]
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.barh(skills_found, counts, color="#1F77B4")
+        ax.set_xlabel("Occurrences")
+        ax.set_ylabel("Skills")
+        ax.invert_yaxis()
+        st.pyplot(fig)
+
+    st.markdown("---")
+    st.balloons()
+
+else:
+    st.info("Please upload a PDF resume to start analysis.")
