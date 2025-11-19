@@ -49,9 +49,10 @@ st.markdown(f"""
         color: {sidebar_text};
     }}
 
-    /* Radio buttons text color */
-    [data-testid="stSidebar"] [role="radiogroup"] label {{
-        color: {sidebar_text};
+    /* Radio buttons text color (Light/Dark options) */
+    [data-testid="stSidebar"] [role="radiogroup"] label,
+    [data-testid="stSidebar"] [role="radiogroup"] span {{
+        color: {sidebar_text} !important;
         font-weight: bold;
     }}
 
@@ -72,7 +73,7 @@ st.markdown(f"""
     div.stButton > button {{
         background-color: {btn_bg};
         color: white;
-        height: 3em;  /* same size as before */
+        height: 3em;
         width: 100%;
         border-radius: 10px;
         font-size: 18px;
@@ -232,5 +233,6 @@ if st.button("Analyze Resume"):
             st.error(f"- {wp}")
     else:
         st.success("No major weak points found! Resume looks good.")
+
 
 
