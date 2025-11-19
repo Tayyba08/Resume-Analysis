@@ -1,159 +1,128 @@
 import streamlit as st
 import re
-import pickle
-import language_tool_python
-from PyPDF2 import PdfReader
+from pdfminer.high_level import extract_text
 
-# ============================================
-# Load ML Model and TF-IDF Vectorizer
-# ============================================
-model = pickle.load(open("resume_model.pkl", "rb"))
-vectorizer = pickle.load(open("tfidf.pkl", "rb"))
-
-# Grammar Checking Tool
-tool = language_tool_python.LanguageTool('en-US')
-
-# ============================================
-# Skills Dictionary
-# ============================================
-skills_dict = [
-    'python','java','sql','machine learning','deep learning','excel',
-    'communication','leadership','html','css','javascript','data analysis',
-    'project management','tableau','power bi','problem solving','react',
-    'cloud','aws','api','django','flask'
-]
-
-# Important Skills (Weak Points check)
-important_skills = ['python','sql','communication','project management','machine learning']
-
-# Action Verbs for Experience Score
-action_verbs = [
-    'managed','led','developed','created','designed','organized',
-    'implemented','supervised','analyzed','optimized'
-]
-
-# ============================================
-# Clean Text Function
-# ============================================
-def clean(text):
-    text = text.lower()
-    text = re.sub(r'[^a-z0-9\s]', ' ', text)
-    text = re.sub(r'\s+', ' ', text)
+# -------------------------
+# TEXT CLEANING FUNCTION
+# -------------------------
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text)
     return text.strip()
 
-# ============================================
-# Extract Text from PDF
-# ============================================
-def extract_pdf_text(uploaded_file):
-    reader = PdfReader(uploaded_file)
-    text = ""
-    for page in reader.pages:
-        extracted = page.extract_text()
-        if extracted:
-            text += extracted + "\n"
-    return text
+# -------------------------
+# SKILLS DICTIONARY
+# -------------------------
+skills_dict = [
+    "python", "java", "c++", "sql", "machine learning", "deep learning",
+    "excel", "power bi", "tableau", "django", "flask", "html", "css",
+    "javascript", "react", "node", "aws", "docker", "kubernetes"
+]
 
-# ============================================
-# Streamlit UI
-# ============================================
-st.title("📄 AI Resume Screening System (PDF + Weak Points Analysis)")
+# -------------------------
+# ACTION VERBS FOR EXPERIENCE
+# -------------------------
+action_verbs = [
+    "managed", "led", "developed", "created", "designed",
+    "organized", "implemented", "built", "optimized"
+]
 
-uploaded_pdf = st.file_uploader("Upload Your Resume (PDF Only)", type=['pdf'])
+# -------------------------
+# WEAK POINTS FINDER
+# -------------------------
+def find_weak_points(text):
+    weak_points = []
+
+    # 1. Too short resume
+    if len(text.split()) < 100:
+        weak_points.append("Resume seems too short.")
+
+    # 2. No action verbs (weak experience section)
+    if not any(verb in text for verb in action_verbs):
+        weak_points.append("Weak experience section (no action verbs found).")
+
+    # 3. Few or no skills
+    matched = [skill for skill in skills_dict if skill in text]
+    if len(matched) < 3:
+        weak_points.append("Very few technical skills detected.")
+
+    # 4. No numbers (metrics missing)
+    if not re.search(r"\d", text):
+        weak_points.append("No measurable achievements (no numbers found).")
+
+    return weak_points
+
+# -------------------------
+# STREAMLIT APP UI
+# -------------------------
+st.set_page_config(page_title="AI Resume Screening App", layout="wide")
+st.title("AI Resume Screening System")
+
+st.write("Upload your resume as PDF or paste the text below:")
+
+resume_text = ""
+
+# PDF upload
+uploaded_pdf = st.file_uploader("Upload PDF Resume", type=["pdf"])
 
 if uploaded_pdf is not None:
-    st.success("PDF Uploaded Successfully!")
+    try:
+        resume_text = extract_text(uploaded_pdf)
+        st.success("PDF text extracted successfully!")
+    except:
+        st.error("Error reading PDF file.")
 
-    if st.button("Analyze Resume"):
+# Manual text input
+manual_text = st.text_area("Or paste your resume text here:", height=250)
 
-        # Extract PDF Text
-        raw_text = extract_pdf_text(uploaded_pdf)
-        st.subheader("📌 Extracted Text (Preview)")
-        st.write(raw_text[:1000] + " ...")
+if manual_text.strip():
+    resume_text = manual_text
 
-        clean_r = clean(raw_text)
+# -------------------------
+# RUN ANALYSIS
+# -------------------------
+if st.button("Analyze Resume"):
 
-        # ============================================
-        # Skills Score
-        # ============================================
-        matched_skills = [s for s in skills_dict if s in clean_r]
-        skills_score = len(matched_skills)
+    if not resume_text.strip():
+        st.warning("Please upload a PDF or paste resume text.")
+        st.stop()
 
-        # ============================================
-        # Keyword Score (TF-IDF)
-        # ============================================
-        tfidf_score = vectorizer.transform([clean_r]).sum()
+    cleaned = clean_text(resume_text)
 
-        # ============================================
-        # Experience Score
-        # ============================================
-        exp_score = sum(clean_r.count(v) for v in action_verbs)
+    # Skills score
+    matched_skills = [skill for skill in skills_dict if skill in cleaned]
+    skills_score = len(matched_skills)
 
-        # ============================================
-        # Grammar Score
-        # ============================================
-        matches = tool.check(clean_r)
-        grammar_score = max(10 - len(matches), 0)
+    # Keyword score
+    keyword_score = len(cleaned.split())
 
-        # ============================================
-        # Final Score Calculation
-        # ============================================
-        final_score = (
-            (skills_score * 25) +
-            (tfidf_score * 30) +
-            (exp_score * 25) +
-            (grammar_score * 10)
-        )
+    # Experience score
+    experience_score = sum(cleaned.count(verb) for verb in action_verbs)
 
-        # ============================================
-        # WEAK POINTS DETECTION
-        # ============================================
-        weak_points = []
+    # Weak points
+    weak_points = find_weak_points(cleaned)
 
-        if skills_score < 3:
-            weak_points.append("Very few technical skills found.")
+    # -------------------------
+    # SHOW RESULTS
+    # -------------------------
+    st.subheader("Resume Analysis Results")
 
-        if tfidf_score < 1:
-            weak_points.append("Resume lacks important job-related keywords.")
+    st.write("### Matched Skills:")
+    st.write(matched_skills if matched_skills else "No major skills detected.")
 
-        if exp_score == 0:
-            weak_points.append("No strong action verbs (developed, managed, created, etc.) found.")
+    st.write("### Score Summary:")
+    st.write(f"**Skills Score:** {skills_score}")
+    st.write(f"**Keyword Score:** {keyword_score}")
+    st.write(f"**Experience Score:** {experience_score}")
 
-        if grammar_score < 7:
-            weak_points.append("Too many grammar mistakes detected.")
+    st.write("### Weak Points:")
+    if weak_points:
+        for wp in weak_points:
+            st.error(f"- {wp}")
+    else:
+        st.success("No major weak points found! Your resume looks strong.")
 
-        if len(raw_text) < 300:
-            weak_points.append("Resume is too short. Add more work experience details.")
+    st.write("### Cleaned Resume Text (for reference):")
+    st.text(cleaned)
 
-        missing = [skill for skill in important_skills if skill not in clean_r]
-        if len(missing) > 0:
-            weak_points.append("Missing important skills: " + ", ".join(missing))
-
-        # ============================================
-        # Display Results
-        # ============================================
-        st.subheader("📊 Resume Scores")
-        st.write("Matched Skills:", matched_skills)
-        st.write("Skills Score:", skills_score)
-        st.write("Keyword Score:", float(tfidf_score))
-        st.write("Experience Score:", exp_score)
-        st.write("Grammar Score:", grammar_score)
-
-        st.success(f"🎯 Final Resume Score: **{final_score:.2f} / 100**")
-
-        # ============================================
-        # WEAK POINTS SECTION
-        # ============================================
-        st.subheader("⚠️ Weak Points")
-        if len(weak_points) == 0:
-            st.success("No major weak points! Your resume is strong.")
-        else:
-            for w in weak_points:
-                st.warning(f"- {w}")
-
-        # ============================================
-        # Job Category Prediction
-        # ============================================
-        st.subheader("📌 Predicted Job Category")
-        features = [[skills_score, float(tfidf_score), exp_score, grammar_score]]
-        pred = model.predict(features)
-        st.info(f"Predicted Job Category: **{pred[0]}**")
