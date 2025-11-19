@@ -155,8 +155,11 @@ if st.button("Analyze Resume"):
         color = "#F44336"  # red
         status = "Weak Resume"
 
-    st.markdown(f"<h3 style='color:{color};'>Score: {resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
-    st.progress(resume_score)
+    # Show Overall Resume Score with color
+st.markdown(f"<h3 style='color:{color};'>Score: {resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
+
+# Safe progress bar (0-100 integer scale)
+st.progress(int(resume_score))
 
     # -------------------------
     # Skills coverage pie chart
