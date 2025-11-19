@@ -1,7 +1,6 @@
 import streamlit as st
 import re
 from pdfminer.high_level import extract_text
-from docx import Document
 import matplotlib.pyplot as plt
 
 # -------------------------
@@ -29,7 +28,7 @@ else:
 # TITLE
 # -------------------------
 st.markdown('<h1 style="text-align:center; color:#1F77B4;">📄 AI Resume Screening System</h1>', unsafe_allow_html=True)
-st.markdown('<h4 style="text-align:center; color:#555;">Upload your resume (PDF/Word) or paste text below</h4>', unsafe_allow_html=True)
+st.markdown('<h4 style="text-align:center; color:#555;">Upload your resume (PDF) or paste text below</h4>', unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------
@@ -79,38 +78,30 @@ def find_weak_points(text, matched_skills, experience_score):
     return weak_points
 
 # -------------------------
-# MODERN DRAG-AND-DROP FILE UPLOAD
+# FILE UPLOAD (PDF ONLY) + MANUAL TEXT
 # -------------------------
 st.sidebar.header("Upload Resume")
-uploaded_file = st.sidebar.file_uploader("Drag & drop PDF or Word file here", type=["pdf","docx"], accept_multiple_files=False)
+uploaded_file = st.sidebar.file_uploader("Drag & drop PDF file here", type=["pdf"], accept_multiple_files=False)
 manual_text = st.sidebar.text_area("Or paste resume text here:", height=200)
 resume_text = ""
 
 if uploaded_file is not None:
-    if uploaded_file.type == "application/pdf":
-        try:
-            resume_text = extract_text(uploaded_file)
-            st.sidebar.success("PDF extracted successfully!")
-        except:
-            st.sidebar.error("Error reading PDF file.")
-    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        try:
-            doc = Document(uploaded_file)
-            resume_text = "\n".join([para.text for para in doc.paragraphs])
-            st.sidebar.success("Word file extracted successfully!")
-        except:
-            st.sidebar.error("Error reading Word file.")
+    try:
+        resume_text = extract_text(uploaded_file)
+        st.sidebar.success("PDF extracted successfully!")
+    except:
+        st.sidebar.error("Error reading PDF file.")
 
 if manual_text.strip():
     resume_text = manual_text
 
 # -------------------------
-# ANALYZE BUTTON (SAME SIZE AS BEFORE)
+# ANALYZE BUTTON
 # -------------------------
 if st.button("Analyze Resume"):
 
     if not resume_text.strip():
-        st.warning("Please upload a file or paste resume text.")
+        st.warning("Please upload a PDF or paste resume text.")
         st.stop()
 
     cleaned = clean_text(resume_text)
