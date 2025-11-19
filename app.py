@@ -2,7 +2,6 @@ import streamlit as st
 import re
 from pdfminer.high_level import extract_text
 import matplotlib.pyplot as plt
-import language_tool_python  # for grammar checking
 
 # -------------------------
 # TEXT CLEANING FUNCTION
@@ -123,19 +122,11 @@ if st.button("Analyze Resume"):
     weak_points = find_weak_points(cleaned, matched_skills, experience_score)
 
     # -------------------------
-    # Grammar check
-    tool = language_tool_python.LanguageTool('en-US')
-    matches = tool.check(resume_text)
-    grammar_errors = len(matches)
-    grammar_score = max(0, 100 - grammar_errors)  # 0-100 scale
-
-    # -------------------------
     # Overall Resume Score (weighted)
     resume_score = round(
         0.4 * skills_coverage + 
         0.3 * min(experience_score, 50) * 2 +  # normalize experience_score roughly to 100
-        0.2 * min(keyword_score, 100) +        # normalize keyword_score
-        0.1 * grammar_score, 2
+        0.2 * min(keyword_score, 100), 2       # normalize keyword_score
     )
 
     # -------------------------
@@ -149,7 +140,6 @@ if st.button("Analyze Resume"):
     st.write(f"**Skills Score:** {skills_score} / {len(skills_dict)} ({skills_coverage}%)")
     st.write(f"**Keyword Score (Total Words):** {keyword_score}")
     st.write(f"**Experience Score (Action Verbs Count):** {experience_score}")
-    st.write(f"**Grammar Score:** {grammar_score}/100")
     st.write(f"**Overall Resume Score:** {resume_score}/100")
 
     # -------------------------
@@ -202,17 +192,6 @@ if st.button("Analyze Resume"):
         st.success("No major weak points found! Resume looks good.")
 
     # -------------------------
-    # Grammar Suggestions
-    st.write("### Grammar Suggestions")
-    if matches:
-        for i, match in enumerate(matches, 1):
-            incorrect_text = match.context[match.offset:match.offset + match.errorLength]
-            st.markdown(f"**{i}. Error Context:** {match.context}")
-            st.markdown(f"- **Incorrect text:** `{incorrect_text}`")
-            st.markdown(f"- **Suggestions:** {', '.join(match.replacements) if match.replacements else 'No suggestion available'}")
-    else:
-        st.success("No grammar errors detected!")
-
-    # -------------------------
     st.write("### Cleaned Resume Text:")
     st.text(cleaned)
+
