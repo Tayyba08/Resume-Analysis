@@ -150,7 +150,7 @@ if st.button("Analyze Resume"):
     st.progress(int(resume_score))
 
     # -------------------------
-    # Score Summary Pie Chart
+    # Score Summary Pie Chart (Smaller)
     st.write("### Score Summary Visualization")
     labels = ['Skills Score', 'Experience Score', 'Keyword Score']
     sizes = [
@@ -159,16 +159,17 @@ if st.button("Analyze Resume"):
         min(keyword_score, 100)
     ]
     colors = ['#4CAF50', '#2196F3', '#FFC107']
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4,4))  # smaller pie chart
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
     ax.axis('equal')
     st.pyplot(fig)
 
-    # Experience Highlights
+    # -------------------------
+    # Experience Highlights (Smaller Bar Chart)
     st.write("### Experience Highlights")
     verb_counts = {verb: cleaned.count(verb) for verb in action_verbs if cleaned.count(verb) > 0}
     if verb_counts:
-        fig2, ax2 = plt.subplots(figsize=(10, 4))
+        fig2, ax2 = plt.subplots(figsize=(8,3))  # smaller figure
         ax2.barh(list(verb_counts.keys()), list(verb_counts.values()), color='#2196F3')
         ax2.set_xlabel("Count in Resume")
         ax2.set_ylabel("Action Verbs")
@@ -176,7 +177,8 @@ if st.button("Analyze Resume"):
     else:
         st.info("No action verbs detected for experience highlights.")
 
-    # Weak points
+    # -------------------------
+    # Weak points / suggestions
     st.write("### Suggested Improvements")
     if weak_points:
         for wp in weak_points:
@@ -184,6 +186,6 @@ if st.button("Analyze Resume"):
     else:
         st.success("No major weak points found! Resume looks good.")
 
-    # Cleaned Resume Text
+    # Cleaned Resume Text (Paragraph Form)
     st.write("### Cleaned Resume Text:")
-    st.text(cleaned)
+    st.write(" ".join(cleaned.split()))  # shows as readable paragraph
