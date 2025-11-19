@@ -4,31 +4,69 @@ from pdfminer.high_level import extract_text
 import matplotlib.pyplot as plt
 
 # -------------------------
-# DARK/LIGHT MODE
+# THEME / DARK-LIGHT MODE
 # -------------------------
 mode = st.sidebar.radio("Choose Theme", ["Light", "Dark"])
 if mode == "Dark":
-    st.markdown("""
-        <style>
-        .stApp {background-color: #1E1E1E; color: #F0F0F0;}
-        div.stButton>button {background-color:#4CAF50; color:white; height:3em; width:100%; border-radius:10px; font-size:18px; font-weight:bold;}
-        div.stButton>button:hover {background-color:#357a38;}
-        </style>
-    """, unsafe_allow_html=True)
+    sidebar_bg = "#2C2C2C"
+    sidebar_text = "#F0F0F0"
+    btn_bg = "#4CAF50"
+    btn_hover = "#357a38"
+    main_bg = "#1E1E1E"
+    main_text = "#F0F0F0"
 else:
-    st.markdown("""
-        <style>
-        .stApp {background-color: #F5F7FA; color: #333333;}
-        div.stButton>button {background-color:#1F77B4; color:white; height:3em; width:100%; border-radius:10px; font-size:18px; font-weight:bold;}
-        div.stButton>button:hover {background-color:#155d8b;}
-        </style>
-    """, unsafe_allow_html=True)
+    sidebar_bg = "#ECEFF1"
+    sidebar_text = "#333333"
+    btn_bg = "#1F77B4"
+    btn_hover = "#155d8b"
+    main_bg = "#F5F7FA"
+    main_text = "#333333"
+
+st.markdown(f"""
+    <style>
+    /* Main app background and text */
+    .stApp {{
+        background-color: {main_bg};
+        color: {main_text};
+    }}
+    /* Sidebar background and text */
+    [data-testid="stSidebar"] > div:first-child {{
+        background-color: {sidebar_bg};
+        color: {sidebar_text};
+    }}
+    /* Upload widget styling (file uploader) */
+    .stFileUploader > label > div {{
+        background-color: {btn_bg};
+        border-radius: 8px;
+        padding: 8px;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+    }}
+    .stFileUploader > label > div:hover {{
+        background-color: {btn_hover};
+    }}
+    /* Analyze button styling */
+    div.stButton > button {{
+        background-color: {btn_bg};
+        color: white;
+        height: 3em;  /* same size as before */
+        width: 100%;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+    }}
+    div.stButton > button:hover {{
+        background-color: {btn_hover};
+    }}
+    </style>
+""", unsafe_allow_html=True)
 
 # -------------------------
 # TITLE
 # -------------------------
-st.markdown('<h1 style="text-align:center; color:#1F77B4;">📄 AI Resume Screening System</h1>', unsafe_allow_html=True)
-st.markdown('<h4 style="text-align:center; color:#555;">Upload your resume (PDF) or paste text below</h4>', unsafe_allow_html=True)
+st.markdown(f'<h1 style="text-align:center; color:{btn_bg};">📄 AI Resume Screening System</h1>', unsafe_allow_html=True)
+st.markdown(f'<h4 style="text-align:center; color:{sidebar_text};">Upload your resume (PDF) or paste text below</h4>', unsafe_allow_html=True)
 st.markdown("---")
 
 # -------------------------
@@ -78,18 +116,18 @@ def find_weak_points(text, matched_skills, experience_score):
     return weak_points
 
 # -------------------------
-# FILE UPLOAD (PDF ONLY) + MANUAL TEXT
+# FILE UPLOAD / TEXT INPUT
 # -------------------------
-st.sidebar.header("Upload Resume")
-uploaded_file = st.sidebar.file_uploader("Drag & drop PDF file here", type=["pdf"], accept_multiple_files=False)
-manual_text = st.sidebar.text_area("Or paste resume text here:", height=200)
+st.sidebar.header("📂 Upload Resume")
+uploaded_file = st.sidebar.file_uploader("Drag & drop PDF file here", type=["pdf"])
+manual_text = st.sidebar.text_area("Or paste resume text:", height=200)
 resume_text = ""
 
 if uploaded_file is not None:
     try:
         resume_text = extract_text(uploaded_file)
-        st.sidebar.success("PDF extracted successfully!")
-    except:
+        st.sidebar.success("PDF extracted!")
+    except Exception as e:
         st.sidebar.error("Error reading PDF file.")
 
 if manual_text.strip():
@@ -99,7 +137,6 @@ if manual_text.strip():
 # ANALYZE BUTTON
 # -------------------------
 if st.button("Analyze Resume"):
-
     if not resume_text.strip():
         st.warning("Please upload a PDF or paste resume text.")
         st.stop()
@@ -113,17 +150,16 @@ if st.button("Analyze Resume"):
     weak_points = find_weak_points(cleaned, matched_skills, experience_score)
 
     resume_score = round(
-        0.4 * skills_coverage + 
-        0.3 * min(experience_score, 50) * 2 + 
-        0.2 * min(keyword_score, 100), 2
+        0.4 * skills_coverage +
+        0.3 * min(experience_score, 50) * 2 +
+        0.2 * min(keyword_score, 100),
+        2
     )
 
-    col1, col2 = st.columns([2,1])
-
+    col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("📑 Resume Preview")
         st.write(" ".join(cleaned.split()))
-
     with col2:
         st.subheader("💼 Detected Skills")
         if matched_skills:
@@ -134,30 +170,32 @@ if st.button("Analyze Resume"):
 
     st.subheader("🏆 Overall Resume Score")
     if resume_score >= 80:
-        color = "#4CAF50"
-        status = "Strong Resume"
+        status_color = "#4CAF50"
+        status_text = "Strong Resume"
     elif resume_score >= 50:
-        color = "#FFC107"
-        status = "Average Resume"
+        status_color = "#FFC107"
+        status_text = "Average Resume"
     else:
-        color = "#F44336"
-        status = "Weak Resume"
-    st.markdown(f"<h3 style='color:{color};'>{resume_score}/100 — {status}</h3>", unsafe_allow_html=True)
+        status_color = "#F44336"
+        status_text = "Weak Resume"
+    st.markdown(f"<h3 style='color:{status_color};'>{resume_score}/100 — {status_text}</h3>", unsafe_allow_html=True)
     st.progress(int(resume_score))
 
+    # Pie chart
     st.subheader("📊 Score Breakdown")
-    labels = ['Skills Score','Experience Score','Keyword Score']
-    sizes = [min(skills_score,len(skills_dict)), min(experience_score,50), min(keyword_score,100)]
-    colors = ['#4CAF50','#2196F3','#FFC107']
-    fig, ax = plt.subplots(figsize=(4,4))
+    labels = ['Skills', 'Experience', 'Keywords']
+    sizes = [min(skills_score, len(skills_dict)), min(experience_score, 50), min(keyword_score, 100)]
+    colors = ['#4CAF50', '#2196F3', '#FFC107']
+    fig, ax = plt.subplots(figsize=(4, 4))
     ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
     ax.axis('equal')
     st.pyplot(fig)
 
+    # Action verbs bar
     st.subheader("📌 Experience Highlights")
     verb_counts = {verb: cleaned.count(verb) for verb in action_verbs if cleaned.count(verb) > 0}
     if verb_counts:
-        fig2, ax2 = plt.subplots(figsize=(8,3))
+        fig2, ax2 = plt.subplots(figsize=(8, 3))
         ax2.barh(list(verb_counts.keys()), list(verb_counts.values()), color='#2196F3')
         ax2.set_xlabel("Count")
         ax2.set_ylabel("Action Verbs")
@@ -165,6 +203,7 @@ if st.button("Analyze Resume"):
     else:
         st.info("No action verbs detected.")
 
+    # Weak points
     st.subheader("⚠ Suggested Improvements")
     if weak_points:
         for wp in weak_points:
